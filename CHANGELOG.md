@@ -1,5 +1,5 @@
 ## [Unreleased]
-
-## [0.1.0] - 2026-05-11
-
 - Initial release
+- Add unicode and ascii variants
+- Add new patterns
+
