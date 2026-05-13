@@ -26,12 +26,12 @@ module LooksLike
 
 
     # ==================== ENCODING ================
-    base64: /(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?/,
-    base64_url: /(?:[A-Za-z0-9+\-_]{4})*(?:[A-Za-z0-9+\-_]{2}==|[A-Za-z0-9+\-_]{3}=)?/,
-    base32: /[A-Z2-7]+=*/,
-    hex: /[[:xdigit:]]+/,
-    binary: /[01]{6,8}/, #/([01]{6}|[01]{8})/,
-    jwt: /[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/,
+    encoded_base64: /(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?/,
+    encoded_base64url: /(?:[A-Za-z0-9+\-_]{4})*(?:[A-Za-z0-9+\-_]{2}==|[A-Za-z0-9+\-_]{3}=)?/,
+    encoded_base32: /[A-Z2-7]+=*/,
+    encoded_hex: /[[:xdigit:]]+/,
+    encoded_binary: /[01]{6,8}/, #/([01]{6}|[01]{8})/,
+    encoded_jwt: /[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/,
 
 
     # ==================== FLAGS ================
@@ -47,18 +47,18 @@ module LooksLike
 
     # ==================== EMAIL =====================
     email_basic: /[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}/,
-    email_extended: /[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}/,
-    email_detailed: /[\w\-]+(\.[\w\-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,4}/,
+    #email_extended: /[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}/,
+    #email_detailed: /[\w\-]+(\.[\w\-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,4}/,
 
     # =================== IP ADDRESS ==========================
-	  ipv4: /(?:(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)\.){3}(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)*/,
-    ipv6: /(?:[[:xdigit:]]{1,4}:){7}[[:xdigit:]]{1,4}/,
+	  ip_v4: /(?:(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)\.){3}(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)*/,
+    ip_v6: /(?:[[:xdigit:]]{1,4}:){7}[[:xdigit:]]{1,4}/,
 
     # ====================== MAC ADDRESS ======================
     #mac: /(?:[[:xdigit:]]{2}:){5}[[:xdigit:]]{2}
-    mac: /[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}/,
-    uuid: /[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}/,
-	  credit_card: /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6011[0-9]{12}|622((12[6-9]|1[3-9][0-9])|([2-8][0-9][0-9])|(9(([0-1][0-9])|(2[0-5]))))[0-9]{10}|64[4-9][0-9]{13}|65[0-9]{14}|3(?:0[0-5]|[68][0-9])[0-9]{11}|3[47][0-9]{13})*/,
+    network_mac: /[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}/,
+    network_uuid: /[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}/,
+	  card_credit: /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6011[0-9]{12}|622((12[6-9]|1[3-9][0-9])|([2-8][0-9][0-9])|(9(([0-1][0-9])|(2[0-5]))))[0-9]{10}|64[4-9][0-9]{13}|65[0-9]{14}|3(?:0[0-5]|[68][0-9])[0-9]{11}|3[47][0-9]{13})*/,
     
     # =================== PHONE NUMBERS =======================
     phone_local: /[+]?[[:digit:]][\d\s-]{8,}/,
@@ -66,8 +66,8 @@ module LooksLike
     phone_intl: /\+[[:digit:]]{1,3}[\d\s-]{7,14}/,
   
     # ================== NUMERIC ====================
-    integer: /(-|\+)?(0|[1-9][[:digit:]]*)/,
-    decimal: /[+-]?[[:digit:]]+\.[[:digit:]]+/,
+    numeric_integer: /(-|\+)?(0|[1-9][[:digit:]]*)/,
+    numeric_decimal: /[+-]?[[:digit:]]+\.[[:digit:]]+/,
   
     # ================ DATE ================
     #Dates
@@ -112,6 +112,13 @@ So a time might appear as either "T134730" in the basic format or "T13:47:30" in
 =end
   }
 
+  GROUPS = PATTERNS.each_with_object({}) do |(key, _), groups|
+    group, subset = key.to_s.split("_", 2).map(&:to_sym)
+    groups[group] ||= {}
+    groups[group][subset] = [key]
+  end
+
+=begin
 
   GROUPS = {
     ascii: {
@@ -134,8 +141,8 @@ So a time might appear as either "T134730" in the basic format or "T13:47:30" in
       graph: [:unicode_graph]
     },
     numeric: {
-      integer: [:integer],
-      decimal: [:decimal]
+      integer: [:numeric_integer],
+      decimal: [:numeric_decimal]
     },
 
     time: {
@@ -153,8 +160,8 @@ So a time might appear as either "T134730" in the basic format or "T13:47:30" in
       eu: [:date_eu]
     },
     ip: {
-      v4: [:ipv4],
-      v6: [:ipv6]
+      v4: [:ip_v4],
+      v6: [:ip_v6]
     },
     email: {
       basic: [:email_basic],
@@ -182,6 +189,7 @@ So a time might appear as either "T134730" in the basic format or "T13:47:30" in
       picoctf: [:flag_picoctf],
       nsec: [:flag_picoctf]
     }
+  =end
     #time: [:time_12, :time_24, :time_zone],
     #date: [:date_iso, :date_us, :date_long, :date_short], #date_rfc2822, date_rfc3339, date_eu
    # datetime: [:time_12, :time_24, :time_zone, :date_iso, :date_us, :date_long, :date_short],
@@ -190,6 +198,7 @@ So a time might appear as either "T134730" in the basic format or "T13:47:30" in
    # numeric: [:integer, :decimal],
    # ip: [:ipv4, :ipv6]
   }
+=end
 
  # PATTERNS = ENCODINGS.merge(CHARACTERS).merge(FORMATS).merge(NUMERICS).merge(TEMPORAL)
     
