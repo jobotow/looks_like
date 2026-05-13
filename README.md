@@ -62,7 +62,7 @@ LooksLike.date?("1/5/1445", format: :hijri)
 
 ---
 
-## LooksLike.want_more?([READ_DOCUMENTATION](DOCUMENTATION))
+### LooksLike.want_more?([READ_DOCUMENTATION](DOCUMENTATION.md))
 
 ---
 
