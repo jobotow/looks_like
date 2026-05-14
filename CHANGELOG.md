@@ -1,5 +1,8 @@
-## [0.1.0]
+## [0.2.0]
 ### Added
+- Building blocks to mainitain regex readability.
+
+## [0.1.0]
 - Initial release
 - Unicode and ascii variants
 - New patterns

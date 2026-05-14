@@ -2,35 +2,34 @@
 
 require_relative "looks_like/version"
 require_relative "looks_like/patterns"
+require_relative 'blocks' #For users who wanna use blocks
 
 module LooksLike
-  # includes?(text, format: nil) will replace all methods with "_only?()"
-  #all methods will be group based, old pattern based methods will be removed
-  # ENCODINGs
+
   LooksLike::GROUPS.each do |group_name, subsets|
-    define_singleton_method("#{group_name}?") do |text, format: nil|
-      keys = expand_format(group_name, format)
-      raise NoMethodError, "#{format} not registered or doesn't exist" if keys.nil?
+    define_singleton_method("#{group_name}?") do |text, subset: nil|
+      keys = expand_format(group_name, subset)
+      raise NoMethodError, "#{subset} not registered or doesn't exist" if keys.nil?
       keys.any? do |key| 
-        raise NoMethodError, "#{format} not registered or doesn't exist" if key.nil?
-        /\A#{LooksLike::PATTERNS[key].source}\z/.match?(text) 
+        raise NoMethodError, "#{subset} not registered or doesn't exist" if key.nil?
+        /\A(#{LooksLike::PATTERNS[key].source})\z/.match?(text) 
       end
     end
   end
 
 
-  def self.includes?(text, format:)
-    case format
+  def self.includes?(text, match:)
+    case match
     when Symbol
-      keys = expand_format(format, nil)
+      keys = expand_format(match, nil)
       keys.any? {|key| LooksLike::PATTERNS[key] =~ text}
     when Hash
-      group, subset = format.first
+      group, subset = match.first
       keys = expand_format(group, subset)
       keys.any? { |key| LooksLike::PATTERNS[key] =~ text }
 
     when Array
-      format.any? do |f|
+      match.any? do |f|
         group = f.is_a?(Hash) ? f.keys.first : f
         subset = f.is_a?(Hash) ? f.values.first : nil
         keys = expand_format(group, subset)
@@ -40,16 +39,16 @@ module LooksLike
   end
 
 
-  def self.groups(format = nil)
-    return LooksLike::GROUPS.keys if format.nil?
-    LooksLike::GROUPS[format].keys
+  def self.groups(match = nil)
+    return LooksLike::GROUPS.keys if match.nil?
+    LooksLike::GROUPS[match].keys
   end
 
   def self.what(text)
     LooksLike::GROUPS.each_with_object({}) do |(group_name, subsets), results|
       matching_subsets = subsets.select do |subset_name, keys|
         
-        keys.any?  { |key| LooksLike::PATTERNS[key].match?(text) }
+        keys.any?  { |key| /\A(#{LooksLike::PATTERNS[key].source})\z/.match?(text)  }
       end.keys
       results[group_name] = matching_subsets unless matching_subsets.empty?
     end
@@ -75,26 +74,26 @@ module LooksLike
 
     # dynamically define new group method if it doesn't exists
     unless respond_to?("#{group}?")
-      define_singleton_method("#{group}?") do |text, format: nil|
-        keys = expand_format(group, format)
+      define_singleton_method("#{group}?") do |text, match: nil|
+        keys = expand_format(group, match)
         keys.any? { |key| /\A#{LooksLike::PATTERNS[key].source}\z/.match?(text) }
       end
     end
   end
 
 
-  def self.scan(text, format:)
-    case format
+  def self.scan(text, match:)
+    case match
     when Symbol
-      keys = expand_format(format, nil)
+      keys = expand_format(match, nil)
       keys.flat_map {|key| text.scan(LooksLike::PATTERNS[key]) }.uniq
     when Hash
-      group, subset = format.first
+      group, subset = match.first
       keys = expand_format(group, subset)
       keys.flat_map { |key| text.scan(LooksLike::PATTERNS[key]) }.uniq
 
     when Array
-      format.each_with_object({}) do |f, results|
+      match.each_with_object({}) do |f, results|
         group = f.is_a?(Hash) ? f.keys.first : f
         keys = expand_format(group, f.is_a?(Hash) ? f.values.first : nil)
         results[group] = keys.flat_map { |key| text.scan(LooksLike::PATTERNS[key]) }.uniq
@@ -102,17 +101,17 @@ module LooksLike
     end
   end
 
-  def self.expand_format(group, format)
-    case format
+  def self.expand_format(group, match)
+    case match
     when nil
       LooksLike::GROUPS[group].values.flatten
     when Symbol
-      LooksLike::GROUPS[group][format]#.values.flatten.uniq #[:all]
+      LooksLike::GROUPS[group][match]#.values.flatten.uniq #[:all]
     #when Hash
-    #  group, subset = format.first
+    #  group, subset = match.first
     #  subset ? LooksLike::GROUPS[group][subset] : LooksLike::GROUPS[group].values.flatten
     when Array
-      format.flat_map { |f| LooksLike::GROUPS[group][f] }
+      match.flat_map { |f| LooksLike::GROUPS[group][f] }
     end
   end
 end

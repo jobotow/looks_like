@@ -1,6 +1,15 @@
+require_relative 'blocks'
 module LooksLike
+  include LooksLike::Blocks
+  #Base = LooksLike::Blocks::Base
+  #Network = LooksLike::Blocks::Network
+  #Date = LooksLike::Blocks::Date
+  #Time = LooksLike::Blocks::Time
+  #Encoded = LooksLike::Blocks::Encoded
   
   PATTERNS = {
+    # Tighten regex to minimize false positives
+
     # =============== ASCII ===============
     ascii_digit: /[0-9]+/,
     ascii_alpha: /[A-Za-z]+/,
@@ -26,23 +35,27 @@ module LooksLike
 
 
     # ==================== ENCODING ================
-    encoded_base64: /(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?/,
-    encoded_base64url: /(?:[A-Za-z0-9+\-_]{4})*(?:[A-Za-z0-9+\-_]{2}==|[A-Za-z0-9+\-_]{3}=)?/,
+    encoded_base64: /(?:#{Encoded::B64}{4})*(?:#{Encoded::B64}{2}==|#{Encoded::B64}{3}=)?/, 
+    #/(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?/,
+    encoded_base64_url: /(?:#{Encoded::B64URL}{4})*(?:#{Encoded::B64URL}{2}==|#{Encoded::B64URL}{3}=)?/,
+    #/(?:[A-Za-z0-9+\-_]{4})*(?:[A-Za-z0-9+\-_]{2}==|[A-Za-z0-9+\-_]{3}=)?/,
     encoded_base32: /[A-Z2-7]+=*/,
-    encoded_hex: /[[:xdigit:]]+/,
-    encoded_binary: /[01]{6,8}/, #/([01]{6}|[01]{8})/,
-    encoded_jwt: /[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/,
+    encoded_hex: /#{Base::HEX}+/,
+    #/[[:xdigit:]]+/,
+    encoded_binary: /#{Base::BIN}{6,8}/, #/[01]{6,8}/,
+    encoded_jwt: /#{Encoded::B64URL}+\.#{Encoded::B64URL}+\.#{Encoded::B64URL}*/,
+    #/[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/,
 
 
     # ==================== FLAGS ================
     flag_standard: /[Ff][Ll][Aa][Gg]\{[^}]+\}/,
     flag_ctf: /[Cc][Tt][Ff]\{[^}]+\}/,
-    flag_htb: /\AHTB\{[^}]+\}/,
-    flag_thm: /\ATHM\{[^}]+\}/,
-    flag_picoctf: /\ApicoCTF\{[^}]+\}/,
+    flag_htb: /HTB\{[^}]+\}/,
+    flag_thm: /THM\{[^}]+\}/,
+    flag_picoctf: /picoCTF\{[^}]+\}/,
     
     # ================= URL ===================
-    url_http: /\Ahttps?:\/\/[[:alnum:]\-]+(\.[[[:alnum:]]\-]+)+([\w\-\.,@?^=%&:\/~\+#]*[\w\-\@?^=%&\/~\+#])?/, #doesnt match "www" only
+    url_http: /https?:\/\/[[:alnum:]\-]+(\.[[[:alnum:]]\-]+)+([\w\-\.,@?^=%&:\/~\+#]*[\w\-\@?^=%&\/~\+#])?/, #doesnt match "www" only
     #url_any: /(https?|ftp):\/\/[[:alnum:]\-]+(\.[[[:alnum:]]\-]+)+([\w\-\.,@^=%&:\/~\+#]*[\w\-\@?^=%&\/~\+#])?/,
 
     # ==================== EMAIL =====================
@@ -51,12 +64,14 @@ module LooksLike
     #email_detailed: /[\w\-]+(\.[\w\-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,4}/,
 
     # =================== IP ADDRESS ==========================
-	  ip_v4: /(?:(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)\.){3}(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)*/,
+	  ip_v4: /#{Network::OCTET}\.#{Network::OCTET}\.#{Network::OCTET}\.#{Network::OCTET}/,
+    #/(?:(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)\.){3}(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)*/,
     ip_v6: /(?:[[:xdigit:]]{1,4}:){7}[[:xdigit:]]{1,4}/,
 
     # ====================== MAC ADDRESS ======================
     #mac: /(?:[[:xdigit:]]{2}:){5}[[:xdigit:]]{2}
-    network_mac: /[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}/,
+    network_mac: /#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}/,
+    #/[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}/,
     network_uuid: /[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}/,
 	  card_credit: /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6011[0-9]{12}|622((12[6-9]|1[3-9][0-9])|([2-8][0-9][0-9])|(9(([0-1][0-9])|(2[0-5]))))[0-9]{10}|64[4-9][0-9]{13}|65[0-9]{14}|3(?:0[0-5]|[68][0-9])[0-9]{11}|3[47][0-9]{13})*/,
     
@@ -71,11 +86,21 @@ module LooksLike
   
     # ================ DATE ================
     #Dates
-    date_iso: /[[:digit:]]{4}-(0?[1-9]|1[0-2])-[[:digit:]]{2}/,
-    date_us: /(0?[1-9]|1[0-2])(\/|-)(0?[-9]|[12][0-9]|3[01])(\/|-)([[:digit:]]{2}|[[:digit:]]{4})/,
-    date_eu: /[[:digit:]]{1,2}\.[[:digit:]]{1,2}\.([[:digit:]]{2}|[[:digit:]]{4})/,
+    #date_iso: /[[:digit:]]{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-8])/,#[[:digit:]]{2}/,j
+    date_iso: /(?:#{Date::YEAR}-#{Date::FEB}-#{Date::FEB_DAY})|(?:#{Date::YEAR}-#{Date::MONTH30}-#{Date::DAY30})|(?:#{Date::YEAR}-#{Date::MONTH31}-#{Date::DAY31})/,
+    date_asian: /(?:#{Date::YEAR}#{Date::FEB}\/#{Date::FEB_DAY})|(?:#{Date::YEAR}\/#{Date::MONTH30}\/#{Date::DAY30})|(?:#{Date::YEAR}\/#{Date::MONTH31}\/#{Date::DAY31})/,
+    date_us: /(?:#{Date::FEB}\/#{Date::FEB_DAY}\/#{Date::YEAR})|(?:#{Date::MONTH30}\/#{Date::DAY30}\/#{Date::YEAR})|(?:#{Date::MONTH31}\/#{Date::DAY31}\/#{Date::YEAR})/,
+    #/(0?[1-9]|1[0-2])(\/|-)(0?[-9]|[12][0-9]|3[01])(\/|-)([[:digit:]]{2}|[[:digit:]]{4})/,
+    date_eu: /(?:#{Date::FEB_DAY}\/#{Date::FEB}\/#{Date::YEAR})|(?:#{Date::DAY30}\/#{Date::MONTH30}\/#{Date::YEAR})|(?:#{Date::DAY31}\/#{Date::MONTH31}\/#{Date::YEAR})/,
+    date_indian: /(?:#{Date::FEB_DAY}-#{Date::FEB}-#{Date::YEAR})|(?:#{Date::DAY30}-#{Date::MONTH30}-#{Date::YEAR})|(?:#{Date::DAY31}-#{Date::MONTH31}-#{Date::YEAR})/,
+    #/[[:digit:]]{1,2}\.[[:digit:]]{1,2}\.([[:digit:]]{2}|[[:digit:]]{4})/,
     date_long: /[[:upper:]][[:alpha:]]{2}\s[[:digit:]]{1,2},\s[[:digit:]]{4}/,
-    date_short: /[[:digit:]]{1,2}-[[:digit:]]{1,2}-[[:digit]]{2,4}/,
+    date_short: /#{Date::DAY31}-#{Date::MONTH31}-(#{Date::YEAR}|#{Date::YEAR2})/,
+    #/[[:digit:]]{1,2}-[[:digit:]]{1,2}-[[:digit]]{2,4}/,j
+    #date_hijri:
+    #date_iso_8601:
+    #date_rfc2822:
+    #date_rfc3339:
 
     # ===================== TIME ====================
 
@@ -96,8 +121,10 @@ module LooksLike
 =end
     #2024-01-15T14:30:00Z  
     #ISO 8601 is the internationally accepted standard for representing date and time. It uses the format YYYY-MM-DDTHH:MM:SSZ where:
-    time_24: /([01][[:digit:]]|2[0-3]):[0-5][[:digit:]](:[0-5][[:digit:]])?/,
-    time_12: /(0?[1-9]|1[0-2]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(AM|PM|am|pm)/,
+    time_24: /#{Time::HOUR24}:#{Time::MINUTE}:#{Time::SECOND}/,
+    #/([01][[:digit:]]|2[0-3]):[0-5][[:digit:]](:[0-5][[:digit:]])?/, # 01:30:12
+    time_12: /#{Time::HOUR12}:#{Time::MINUTE}:#{Time::SECOND}\?#{Time::AMPM}/,
+    #/(0?[1-9]|1[0-2]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(AM|PM|am|pm)/,
     time_zone: /([01][[:digit:]]|2[0-3]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(UTC|GMT[+-][[:digit:]]{2}:[[:digit]]{2})/,
 
     # Datetime
@@ -117,89 +144,5 @@ So a time might appear as either "T134730" in the basic format or "T13:47:30" in
     groups[group] ||= {}
     groups[group][subset] = [key]
   end
-
-=begin
-
-  GROUPS = {
-    ascii: {
-      digit: [:ascii_digit],
-      alpha: [:ascii_alpha],
-      upper: [:ascii_upper],
-      lower: [:ascii_lower],
-      alphanum: [:ascii_alphanum],
-      hex: [:ascii_hex],
-      punct: [:ascii_punct]
-    },
-    unicode: {
-      digit: [:unicode_digit],
-      alpha: [:unicode_alpha],
-      upper: [:unicode_upper],
-      lower: [:unicode_lower],
-      alphanum: [:unicode_alphanum],
-      punct: [:unicode_punct],
-      print: [:unicode_print],
-      graph: [:unicode_graph]
-    },
-    numeric: {
-      integer: [:numeric_integer],
-      decimal: [:numeric_decimal]
-    },
-
-    time: {
-      h12: [:time_12],
-      h24: [:time_24],
-      zone: [:time_zone]
-    },
-    date: {
-      iso: [:date_iso],
-      us: [:date_us],
-      long: [:date_long],
-      short: [:date_short],
-      #rfc2822: [:date_rfc2822],
-      #rfc3339: [:date_rfc3339],
-      eu: [:date_eu]
-    },
-    ip: {
-      v4: [:ip_v4],
-      v6: [:ip_v6]
-    },
-    email: {
-      basic: [:email_basic],
-      extended: [:email_extended],
-      detailed: [:email_detailed]
-    },
-    url: {
-      http: [:url_http],
-      #ftp: [:url_ftp],
-      #https: [:url_https],
-      #sftp: [:url_sftp]
-    },
-    encoded: {
-      base64: [:base64],
-      binary: [:binary],
-      base32: [:base32],
-      hex: [:ascii_hex],
-      jwt: [:jwt]
-    },
-    flag: {
-      standard: [:flag_standard],
-      ctf: [:flag_ctf],
-      htb: [:flag_htb],
-      thm: [:flag_thm],
-      picoctf: [:flag_picoctf],
-      nsec: [:flag_picoctf]
-    }
-  =end
-    #time: [:time_12, :time_24, :time_zone],
-    #date: [:date_iso, :date_us, :date_long, :date_short], #date_rfc2822, date_rfc3339, date_eu
-   # datetime: [:time_12, :time_24, :time_zone, :date_iso, :date_us, :date_long, :date_short],
-   # phone: [:phone_local, :phone_us, :phone_intl],
-   # email: [:email_simple, :email_permissive, :email_strict],
-   # numeric: [:integer, :decimal],
-   # ip: [:ipv4, :ipv6]
-  }
-=end
-
- # PATTERNS = ENCODINGS.merge(CHARACTERS).merge(FORMATS).merge(NUMERICS).merge(TEMPORAL)
     
 end
