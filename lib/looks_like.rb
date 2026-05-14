@@ -2,7 +2,7 @@
 
 require_relative "looks_like/version"
 require_relative "looks_like/patterns"
-require_relative 'blocks' #For users who wanna use blocks
+require_relative 'looks_like/blocks' #For users who wanna use blocks
 
 module LooksLike
 

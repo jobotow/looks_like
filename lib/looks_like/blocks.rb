@@ -36,7 +36,7 @@ module LooksLike
 
     module Encoded
       B64 = '[A-Za-z0-9+\/]'
-      B64URL = '[A-Za-z0-0\-_]'
+      B64URL = '[A-Za-z0-9\-_]'
       #HEX = '[A-Fa-f0-9]'
     end
   end

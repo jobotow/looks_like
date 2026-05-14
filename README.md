@@ -26,9 +26,9 @@ LooksLike.date?("2026-05-11")
 ### Format Narrowing
 When you need to be specific about which variant
 ```ruby
-LooksLike.encoded?('dW5pY29ybg==', format: :base64)
-LooksLike.ip?("192.168.1.1", format: :v4)
-LooksLike.date?("2026-05-11", format: :iso)
+LooksLike.encoded?('dW5pY29ybg==', subset: :base64)
+LooksLike.ip?("192.168.1.1", subset: :v4)
+LooksLike.date?("2026-05-11", subset: :iso)
 ```
 
 ---
@@ -37,9 +37,9 @@ LooksLike.date?("2026-05-11", format: :iso)
 Extract all matches from a given text:
 
 ```ruby
-LooksLike.scan('foo dW5pY29ybg== bar Ym9hdA==', :encoded)
+LooksLike.scan('foo dW5pY29ybg== bar Ym9hdA==', match: :encoded)
 
-LooksLike.scan('contact foo@bar.com or baz@qux.com', :email)
+LooksLike.scan('contact foo@bar.com or baz@qux.com', match: :email)
 
 ```
 
@@ -57,7 +57,7 @@ LooksLike.what('hello')
 Adding patterns to existing groups
 ```ruby
 LooksLike.register(:date_hijri, /[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}/)
-LooksLike.date?("1/5/1445", format: :hijri)
+LooksLike.date?("1/5/1445", subset: :hijri)
 ```
 
 ---

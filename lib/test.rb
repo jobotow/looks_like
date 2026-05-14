@@ -8,4 +8,5 @@ require_relative 'looks_like'
 
 #puts "INPUT: picoCTF{h3ll0_w0rld}   | RESULT: #{LooksLike.what("picoCTF{h3ll0_w0rld}")}"
 #puts LooksLike.what("hello")
-puts LooksLike.what("ἴος or ἰός")
+#puts LooksLike.what("ἴος or ἰός")
+puts LooksLike.what("2024-04-20")

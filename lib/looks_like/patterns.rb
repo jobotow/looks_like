@@ -1,11 +1,41 @@
-require_relative 'blocks'
+#require_relative 'blocks'
 module LooksLike
-  include LooksLike::Blocks
+  #include LooksLike::Blocks
   #Base = LooksLike::Blocks::Base
   #Network = LooksLike::Blocks::Network
   #Date = LooksLike::Blocks::Date
   #Time = LooksLike::Blocks::Time
   #Encoded = LooksLike::Blocks::Encoded
+
+    #these regexes are kept as blocks for false positives
+      BASE_HEXBYTE = '[[:xdigit:]]{2}'
+      BASE_HEXPREFIX= '(?:0x[[:xdigit:]]+)'
+
+      DATE_YEAR4  = '\d{4}'
+      DATE_YEAR2 =  '\d{2}'
+      DATE_MONTH30 = '(?:04|06|09|11)'
+      DATE_MONTH31 = '(?:01|03|05|07|08|12)'
+      DATE_MONTHNAME31 = '(?:Jan|Mar|May|Jul|Aug|Oct|Dec)'
+      DATE_MONTHNAME30 = '(?:Apr|Jun|Sep|Nov)'
+      DATE_FEBMONTH = 'Feb'
+      DATE_FEB = '02'
+      DATE_FEB_DAY =  '(?:0[1-9]|[12][0-9])'
+      DATE_DAY30 =  '(?:0[1-9]|[12][0-9]|30)'
+      DATE_DAY31 = '(?:0[1-9]|1\d|2\d|3[01])'
+      
+      TIME_HOUR24 = '(?:[01][0-9]|2[0-3])'
+      TIME_HOUR12 = '(?:0?[1-9]|1[0-2])'
+      TIME_MIN_SEC = '[0-5][0-9]' # same as sec
+      TIME_AMPM = '(?:AM|PM|am|pm)'
+
+      NETWORK_OCTET = '(?:25[0-5]|2[0-4]\d|[01]?\d\d?)'
+
+      ENCODED_B64 = '[A-Za-z0-9+\/]'
+      ENCODED_B64URL = '[A-Za-z0-9\-_]'
+
+
+
+
   
   PATTERNS = {
     # Tighten regex to minimize false positives
@@ -18,7 +48,7 @@ module LooksLike
     ascii_upper: /[A-Z]+/,
     ascii_space: /[ \t]+/,
     ascii_punct: /[!@#\$%\^&*()_\-=+~`{|}\[\]\\';:"\/?.>,<]+/,
-    ascii_hex: /(0x)?[A-Fa-f0-9]+/,
+    ascii_hex: /[[:xdigit:]]+/,
 
 
 
@@ -35,15 +65,14 @@ module LooksLike
 
 
     # ==================== ENCODING ================
-    encoded_base64: /(?:#{Encoded::B64}{4})*(?:#{Encoded::B64}{2}==|#{Encoded::B64}{3}=)?/, 
+    encoded_base64: /(?:#{ENCODED_B64}{4})*(?:#{ENCODED_B64}{2}==|#{ENCODED_B64}{3}=)?/, 
     #/(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?/,
-    encoded_base64_url: /(?:#{Encoded::B64URL}{4})*(?:#{Encoded::B64URL}{2}==|#{Encoded::B64URL}{3}=)?/,
+    encoded_base64_url: /(?:#{ENCODED_B64URL}{4})*(?:#{ENCODED_B64URL}{2}==|#{ENCODED_B64URL}{3}=)?/,
     #/(?:[A-Za-z0-9+\-_]{4})*(?:[A-Za-z0-9+\-_]{2}==|[A-Za-z0-9+\-_]{3}=)?/,
     encoded_base32: /[A-Z2-7]+=*/,
-    encoded_hex: /#{Base::HEX}+/,
-    #/[[:xdigit:]]+/,
-    encoded_binary: /#{Base::BIN}{6,8}/, #/[01]{6,8}/,
-    encoded_jwt: /#{Encoded::B64URL}+\.#{Encoded::B64URL}+\.#{Encoded::B64URL}*/,
+    encoded_hex: /[[:xdigit:]]+/,
+    encoded_binary: /[01]{6,8}/,
+    encoded_jwt: /#{ENCODED_B64URL}+\.#{ENCODED_B64URL}+\.#{ENCODED_B64URL}*/,
     #/[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/,
 
 
@@ -64,40 +93,52 @@ module LooksLike
     #email_detailed: /[\w\-]+(\.[\w\-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,4}/,
 
     # =================== IP ADDRESS ==========================
-	  ip_v4: /#{Network::OCTET}\.#{Network::OCTET}\.#{Network::OCTET}\.#{Network::OCTET}/,
+	  ip_v4: /#{NETWORK_OCTET}\.#{NETWORK_OCTET}\.#{NETWORK_OCTET}\.#{NETWORK_OCTET}/,
     #/(?:(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)\.){3}(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)*/,
     ip_v6: /(?:[[:xdigit:]]{1,4}:){7}[[:xdigit:]]{1,4}/,
 
     # ====================== MAC ADDRESS ======================
     #mac: /(?:[[:xdigit:]]{2}:){5}[[:xdigit:]]{2}
-    network_mac: /#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}:#{Network::HEXBYTE}/,
-    #/[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}/,
+    network_mac: /[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}:[[:xdigit:]]{2}/,
     network_uuid: /[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}/,
 	  card_credit: /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6011[0-9]{12}|622((12[6-9]|1[3-9][0-9])|([2-8][0-9][0-9])|(9(([0-1][0-9])|(2[0-5]))))[0-9]{10}|64[4-9][0-9]{13}|65[0-9]{14}|3(?:0[0-5]|[68][0-9])[0-9]{11}|3[47][0-9]{13})*/,
     
     # =================== PHONE NUMBERS =======================
     phone_local: /[+]?[[:digit:]][\d\s-]{8,}/,
     phone_us: /(\+1)?[-.\s]?\(?[[:digit:]]{3}\)?[-.\s]?[[:digit:]]{3}[-.\s]?[[:digit:]]{4}/,
-    phone_intl: /\+[[:digit:]]{1,3}[\d\s-]{7,14}/,
+    phone_intl: /\+[[:digit:]]{1,3}[\d\s-]{7,14}/,  #phone_e164 (standard international)
+    #phone_nanp
+    #phone_uk
+    #phone_eu
+    #phone_jp
+    #phone_au
+    #phone_in
+    #phone_br
+    #phone_extension
+    #phone_emergency #might add false positives to phone group, needs accurate regex tightening
   
     # ================== NUMERIC ====================
     numeric_integer: /(-|\+)?(0|[1-9][[:digit:]]*)/,
     numeric_decimal: /[+-]?[[:digit:]]+\.[[:digit:]]+/,
+    numeric_hex: /(?:0x[[:xdigit:]]+)/,
   
     # ================ DATE ================
-    #Dates
-    #date_iso: /[[:digit:]]{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-8])/,#[[:digit:]]{2}/,j
-    date_iso: /(?:#{Date::YEAR}-#{Date::FEB}-#{Date::FEB_DAY})|(?:#{Date::YEAR}-#{Date::MONTH30}-#{Date::DAY30})|(?:#{Date::YEAR}-#{Date::MONTH31}-#{Date::DAY31})/,
-    date_asian: /(?:#{Date::YEAR}#{Date::FEB}\/#{Date::FEB_DAY})|(?:#{Date::YEAR}\/#{Date::MONTH30}\/#{Date::DAY30})|(?:#{Date::YEAR}\/#{Date::MONTH31}\/#{Date::DAY31})/,
-    date_us: /(?:#{Date::FEB}\/#{Date::FEB_DAY}\/#{Date::YEAR})|(?:#{Date::MONTH30}\/#{Date::DAY30}\/#{Date::YEAR})|(?:#{Date::MONTH31}\/#{Date::DAY31}\/#{Date::YEAR})/,
-    #/(0?[1-9]|1[0-2])(\/|-)(0?[-9]|[12][0-9]|3[01])(\/|-)([[:digit:]]{2}|[[:digit:]]{4})/,
-    date_eu: /(?:#{Date::FEB_DAY}\/#{Date::FEB}\/#{Date::YEAR})|(?:#{Date::DAY30}\/#{Date::MONTH30}\/#{Date::YEAR})|(?:#{Date::DAY31}\/#{Date::MONTH31}\/#{Date::YEAR})/,
-    date_indian: /(?:#{Date::FEB_DAY}-#{Date::FEB}-#{Date::YEAR})|(?:#{Date::DAY30}-#{Date::MONTH30}-#{Date::YEAR})|(?:#{Date::DAY31}-#{Date::MONTH31}-#{Date::YEAR})/,
-    #/[[:digit:]]{1,2}\.[[:digit:]]{1,2}\.([[:digit:]]{2}|[[:digit:]]{4})/,
-    date_long: /[[:upper:]][[:alpha:]]{2}\s[[:digit:]]{1,2},\s[[:digit:]]{4}/,
-    date_short: /#{Date::DAY31}-#{Date::MONTH31}-(#{Date::YEAR}|#{Date::YEAR2})/,
-    #/[[:digit:]]{1,2}-[[:digit:]]{1,2}-[[:digit]]{2,4}/,j
-    #date_hijri:
+  
+    date_iso_8601: /(?:#{DATE_YEAR4}-#{DATE_FEB}-#{DATE_FEB_DAY})|(?:#{DATE_YEAR4}-#{DATE_MONTH30}-#{DATE_DAY30})|(?:#{DATE_YEAR4}-#{DATE_MONTH31}-#{DATE_DAY31})/,
+    # 2024-04-20
+    date_iso_8601_slash: /(?:#{DATE_YEAR4}\/#{DATE_FEB}\/#{DATE_FEB_DAY})|(?:#{DATE_YEAR4}\/#{DATE_MONTH30}\/#{DATE_DAY30})|(?:#{DATE_YEAR4}\/#{DATE_MONTH31}\/#{DATE_DAY31})/,
+    # 2024/04/20
+    date_us: /(?:#{DATE_FEB}\/#{DATE_FEB_DAY}\/#{DATE_YEAR4})|(?:#{DATE_MONTH30}\/#{DATE_DAY30}\/#{DATE_YEAR4})|(?:#{DATE_MONTH31}\/#{DATE_DAY31}\/#{DATE_YEAR4})/,
+    # 04/20/2024
+    date_eu: /(?:#{DATE_FEB_DAY}\/#{DATE_FEB}\/#{DATE_YEAR4})|(?:#{DATE_DAY30}\/#{DATE_MONTH30}\/#{DATE_YEAR4})|(?:#{DATE_DAY31}\/#{DATE_MONTH31}\/#{DATE_YEAR4})/,
+    # 20/04/2024
+    date_eu_hyphen: /(?:#{DATE_FEB_DAY}-#{DATE_FEB}-#{DATE_YEAR4})|(?:#{DATE_DAY30}-#{DATE_MONTH30}-#{DATE_YEAR4})|(?:#{DATE_DAY31}-#{DATE_MONTH31}-#{DATE_YEAR4})/,
+    # 20-04-2024
+    date_long: /(#{DATE_MONTHNAME30}\s#{DATE_DAY30},\s#{DATE_YEAR4})|(#{DATE_MONTHNAME31}\s#{DATE_DAY31},\s#{DATE_YEAR4})|(#{DATE_FEBMONTH}\s#{DATE_FEB_DAY},\s#{DATE_YEAR4})/,
+    #Jan 23, 2025
+    date_short: /(#{DATE_DAY31}-#{DATE_MONTH31}-(#{DATE_YEAR4}|#{DATE_YEAR2}))|(#{DATE_DAY30}-#{DATE_MONTH30}-(#{DATE_YEAR4}|#{DATE_YEAR2}))|(#{DATE_FEB_DAY}-#{DATE_FEBMONTH}-(#{DATE_YEAR4}|#{DATE_YEAR2}))/,
+    # 20-04-2024 or 20-04-24
+   
     #date_iso_8601:
     #date_rfc2822:
     #date_rfc3339:
@@ -112,18 +153,15 @@ module LooksLike
 
     European Format: DD/MM/YYYY (e.g., 15/01/2024). Widely seen in official documents and public records across most European countries. This format prioritizes the day over the month, providing a logical chronological sequence that reduces confusion within the region.
 
-    Asian Formats: YYYY/MM/DD (e.g., 2024/01/15). Frequently used in East Asia, including Japan, China, and South Korea. This format aligns closely with ISO standards, making it highly suitable for database entries and digital systems due to its descending order of time units.
-
     Middle Eastern Variations: Some countries in the Middle East adopt unique hybrids of the European and ISO formats, while others follow the Hijri calendar, which uses a completely different lunar-based system for date representation.
 
-    Indian Format: DD-MM-YYYY (e.g., 15-01-2024). This format closely resembles the European style but uses hyphens instead of slashes and is standard for official use in India.
-
+    
 =end
     #2024-01-15T14:30:00Z  
     #ISO 8601 is the internationally accepted standard for representing date and time. It uses the format YYYY-MM-DDTHH:MM:SSZ where:
-    time_24: /#{Time::HOUR24}:#{Time::MINUTE}:#{Time::SECOND}/,
+    time_24: /#{TIME_HOUR24}:#{TIME_MIN_SEC}:#{TIME_MIN_SEC}/,
     #/([01][[:digit:]]|2[0-3]):[0-5][[:digit:]](:[0-5][[:digit:]])?/, # 01:30:12
-    time_12: /#{Time::HOUR12}:#{Time::MINUTE}:#{Time::SECOND}\?#{Time::AMPM}/,
+    time_12: /#{TIME_HOUR12}:#{TIME_MIN_SEC}:#{TIME_MIN_SEC}\?#{TIME_AMPM}/,
     #/(0?[1-9]|1[0-2]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(AM|PM|am|pm)/,
     time_zone: /([01][[:digit:]]|2[0-3]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(UTC|GMT[+-][[:digit:]]{2}:[[:digit]]{2})/,
 
