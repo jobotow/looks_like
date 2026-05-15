@@ -18,7 +18,7 @@ module LooksLike
   end
 
 
-  def self.includes?(text, match:)
+  def self.contains?(text, match:)
     case match
     when Symbol
       keys = expand_format(match, nil)
@@ -82,31 +82,55 @@ module LooksLike
   end
 
 
-  def self.scan(text, match:)
+  def self.extract(text, match:nil, by: :word)
     case match
+    when nil
+      LooksLike::GROUPS.each_with_object({}) do |(group_name, _), results|
+        matches = extract(text, match: group_name, by: by)
+        results[group_name] = matches unless matches.empty?
+      end
     when Symbol
       keys = expand_format(match, nil)
-      keys.flat_map {|key| text.scan(LooksLike::PATTERNS[key]) }.uniq
+      keys.flat_map {|key| text.scan(get_anchors(LooksLike::PATTERNS[key].source, by: by)) }.uniq
+        #text.scan(/(?<!\S)#{LooksLike::PATTERNS[key].source}(?!\S)/) }.uniq
     when Hash
       group, subset = match.first
       keys = expand_format(group, subset)
-      keys.flat_map { |key| text.scan(LooksLike::PATTERNS[key]) }.uniq
+      #keys.flat_map { |key| text.scan(/\b#{LooksLike::PATTERNS[key].source}\b/) }.uniq
+      keys.flat_map {|key| text.scan(get_anchors(LooksLike::PATTERNS[key].source, by: by)) }.uniq
 
     when Array
       match.each_with_object({}) do |f, results|
         group = f.is_a?(Hash) ? f.keys.first : f
         keys = expand_format(group, f.is_a?(Hash) ? f.values.first : nil)
-        results[group] = keys.flat_map { |key| text.scan(LooksLike::PATTERNS[key]) }.uniq
+        #results[group] = keys.flat_map { |key| text.scan(/\b#{LooksLike::PATTERNS[key].source}\b/) }.uniq
+        results[group] = keys.flat_map {|key| text.scan(get_anchors(LooksLike::PATTERNS[key].source, by: by)) }.uniq
       end
     end
   end
+
+  def self.get_anchors(pattern, by:)
+    case by
+    when :word
+      /(?<!\S)(#{pattern})(?!\S)/
+    when :line
+      /^(#{pattern})$/
+    when :exact
+      /\A(#{pattern})\z/
+    when :free
+      /#{pattern}/
+    else
+      raise ArgumentError, "Unknown boundary: #{by}"
+    end
+  end
+
 
   def self.expand_format(group, match)
     case match
     when nil
       LooksLike::GROUPS[group].values.flatten
     when Symbol
-      LooksLike::GROUPS[group][match]#.values.flatten.uniq #[:all]
+      LooksLike::GROUPS[group][match]
     #when Hash
     #  group, subset = match.first
     #  subset ? LooksLike::GROUPS[group][subset] : LooksLike::GROUPS[group].values.flatten
