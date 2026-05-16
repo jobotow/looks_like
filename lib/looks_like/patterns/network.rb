@@ -1,0 +1,1 @@
+#network patterns [ip, domain, url, email, mac, uuid, cve]

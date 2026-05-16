@@ -1,11 +1,5 @@
-#require_relative 'blocks'
 module LooksLike
-  #include LooksLike::Blocks
-  #Base = LooksLike::Blocks::Base
-  #Network = LooksLike::Blocks::Network
-  #Date = LooksLike::Blocks::Date
-  #Time = LooksLike::Blocks::Time
-  #Encoded = LooksLike::Blocks::Encoded
+
 
     #these regexes are kept as blocks for false positives
   BASE_HEXBYTE = '[[:xdigit:]]{2}'

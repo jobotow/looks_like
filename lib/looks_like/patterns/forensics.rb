@@ -1,0 +1,1 @@
+# forensic_patterns = [magic, version, timestamp, encoding]

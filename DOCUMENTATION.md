@@ -15,9 +15,11 @@ Returns `true` if `text` matches any pattern in `group` group. Pass `subset:` to
 
 #### Examples
 ```ruby
+require 'looks_like'
+
 LooksLike.email?("foo@bar.com")   # => true
 LooksLike.date?("2026-05-11")     # => true
-LooksLike.date?("2026-05-11", subset: :iso)  # => true
+LooksLike.date?("2026-05-11", subset: :iso_8601)  # => true
 LooksLike.date?("2026-05-11", subset: :eu) # => false
 ```
 
@@ -25,6 +27,8 @@ LooksLike.date?("2026-05-11", subset: :eu) # => false
 
 ### Classification Method
 ```ruby
+require 'looks_like'
+
 LooksLike.what(text) => Hash
 ```
 Returns a hash `{group: [:subsets] }` of every group and subset `text` matches. Useful when type of `text` is unknown
@@ -34,11 +38,13 @@ Returns a hash `{group: [:subsets] }` of every group and subset `text` matches. 
 
 #### Examples
 ```ruby
+require 'looks_like'
+
 LooksLike.what("foo@bar.com")
 # => {:unicode=>[:print, :graph], :email=>[:basic]}
 
 LooksLike.what("2026-05-11")
-# => {:unicode=>[:print, :graph], :phone=>[:local], :date=>[:iso]}
+# => {:unicode=>[:print, :graph], :phone=>[:local], :date=>[:iso_8601]}
 
 LooksLike.what("hello")
 # => {:ascii=>[:alpha, :alphanum, :lower], :unicode=>[:alpha, :alphanum, :lower, :print, :graph]}
@@ -49,29 +55,43 @@ LooksLike.what("ἴος or ἰός")
 
 ---
 
-### Scanning Method
+### Extracting Method
 ```ruby
-LooksLike.scan(text, match: nil) => Array | Hash
+LooksLike.extract(text, match: nil, by: :word) => Array | Hash
 ```
-Extracts all  matches of a pattern from a string
+Extracts all  matches of a pattern from a string by defined boundary
 
 #### Parameters
 `text`(String): Text to scan
-**Format could either be a Symbol a Hash or an Array**
+**Match could either be a Symbol a Hash or an Array**
+`match:`(nil): Scan all groups
 `match:`(Symbol): The group to scan for
 `match:`(Hash): `{ group: :subset }` to narrow a specific subset
 `match:`(Array): multiple groups, returns a Hash of results per group
 
+`by:`(Symbol, optional): How boundaries are applied
+- `:word`: space delimited tokens (default)
+- `:line`: line boundaries
+- `:free`: No boundaries, anywhere in string
+- `:exact`: Entire `text` must match.
+
+
 #### Examples
 ```ruby
-LooksLike.scan("contact foo@bar.com or baz@qux.com", match: :email)
+require 'looks_like'
+
+LooksLike.extract("contact foo@bar.com or baz@qux.com", match: :email)
 # => ["foo@bar.com", "baz@qux.com"]
 
-LooksLike.scan("dump bG9va3NfbGlrZQo= and abc123", match: {match: :base64})
+LooksLike.extract("dump bG9va3NfbGlrZQo= and abc123", match: {encoded: :base64})
 # => ["dump", "", "bG9va3NfbGlrZQo=", "abc1"]
 
-LooksLike.scan("foo@bar.com uses ip 192.168.1.1", match: [:email, :ip])
+LooksLike.extract("foo@bar.com uses ip 192.168.1.1", match: [:email, :ip])
 # => {:email=>["foo@bar.com"], :ip=>["192.168.1.1"]}
+
+LooksLike.extract("foo@bar.com uses ip 192.168.1.1", match: [:email, :ip])
+# => {:email=>[], :ip=>[]}
+
 ```
 
 ---
@@ -88,6 +108,8 @@ Registers a new pattern at runtime. If the group does not exist it is created au
 
 #### Examples
 ```ruby
+require 'looks_like'
+
 LooksLike.register(:date_hijri, /[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}/)
 LooksLike.date?("1/5/1445", match: :hijri)  # => true
 
@@ -108,6 +130,8 @@ Accessible directly if raw regex access is needed
 
 #### Example
 ```ruby
+require 'looks_like'
+
 LooksLike::PATTERNS[:ip_v4]
 # => (?-mix:(?:(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)\.){3}(?:25[0-5]|2[0-4][[:digit:]]|[01]?[[:digit:]][[:digit:]]?)*)
 ```
@@ -119,45 +143,51 @@ LooksLike::GROUPS => Hash
 A nested hash of groups of their subsets, auto-built from `PATTERNS`
 Updated automatically when `register` is called
 ```ruby
+require 'looks_like'
+
 LooksLike::GROUPS[:date]
-# => {:iso=>[:date_iso], :us=>[:date_us], :eu=>[:date_eu], :long=>[:date_long], :short=>[:date_short]}
+# => {:iso_8601=>[:date_iso], :us=>[:date_us], :eu=>[:date_eu], :long=>[:date_long], :short=>[:date_short]}
 ```
 
 ---
 
-### Includes? Method
+### Contains? Method
 ```ruby
-LooksLike.includes?(text, match: nil) => true || false
+LooksLike.contains?(text, match: nil) => true || false
 ```
-Checks if a pattern exists anywhere within the string. Unlike the `?` detection methods which require a full string match, `includes?` matches substrings.
+Checks if a pattern exists anywhere within the string. Unlike the `?` detection methods which require a full string match, `contains?` matches substrings.
 
 #### Parameters
 `text`(String): The string to search within
-**Format could either be a Symbol a Hash or an Array**
+**Match could either be a Symbol a Hash or an Array**
 `match:`(Symbol): The group to scan for
 `match:`(Hash): `{ group: :subset }` to narrow a specific subset
 `match:`(Array): multiple groups, returns a Hash of results per group
 
 #### Examples
 ```ruby
-LooksLike.includes?("contact foo@bar.com or baz@qux.com", match: :email)
+require 'looks_like'
+
+LooksLike.contains?("contact foo@bar.com or baz@qux.com", match: :email)
 # => true
 
-LooksLike.includes?("dump bG9va3NfbGlrZQo= and abc123", match: {encoded: :base64})
+LooksLike.contains?("dump bG9va3NfbGlrZQo= and abc123", match: {encoded: :base64})
 # => true
 
-LooksLike.includes?("foo@bar.com uses ip 192.168.1.1", match: [:email, :ip])
+LooksLike.contains?("foo@bar.com uses ip 192.168.1.1", match: [:email, :ip])
 # => true
 
-LooksLike.includes?("hello world", match: :email)
+LooksLike.contains?("hello world", match: :email)
 # => false
 ```
 
 #### Difference from `?` methods
 ```ruby
+require 'looks_like'
+
 LooksLike.email?("contact foo@bar.com or baz@qux.com")
 # => false
-LooksLike.includes?("contact foo@bar.com or baz@qux.com", match: :email)
+LooksLike.contains?("contact foo@bar.com or baz@qux.com", match: :email)
 # => true
 ```
 
@@ -170,7 +200,7 @@ Every pattern in `PATTERNS` must follow the `group_subset` naming convention. Th
 
 ### Valid Names
 ```ruby
-:date_iso      # group: :date,    subset: :iso
+:date_iso_8601      # group: :date,    subset: :iso_8601
 :email_basic   # group: :email,   subset: :basic
 :encoded_jwt   # group: :encoded  subset: :jwt
 ```
@@ -188,6 +218,8 @@ Patterns that don't follow will either be raised or silently missclassified
 ## EXAMPLES
 ### Classify an unknown CSV column
 ```ruby
+require 'looks_like'
+
 rows.each do |row|
   row.each do |field|
     puts "#{field} looks like: #{LooksLike.what(field)}"
@@ -199,10 +231,12 @@ end
 
 ### Scanning file
 ```ruby
+require 'looks_like'
+
 file = File.read("file.txt")
-emails = LooksLike.scan(file, match: :email)
-ips = LooksLike.scan(file, match: :ip)
-tokens = LooksLike.scan(file, match: :encoded)
+emails = LooksLike.extract(file, match: :email)
+ips = LooksLike.extract(file, match: :ip)
+tokens = LooksLike.extract(file, match: :encoded)
 
 puts "Found #{emails.length} emails, #{ips.length} IPs, #{tokens.length} tokens"
 ```
@@ -211,8 +245,10 @@ puts "Found #{emails.length} emails, #{ips.length} IPs, #{tokens.length} tokens"
 
 ### Flag Hunting
 ```ruby
+require 'looks_like'
+
 output = `./challenge.txt`
-flags = LooksLike.scan(output, match: :flag)
+flags = LooksLike.extract(output, match: :flag)
 puts flags.first
 ```
 
@@ -220,14 +256,31 @@ puts flags.first
 
 ### Runtime Extensions
 ```ruby
+require 'looks_like'
+
 LooksLike.register(:crypto_bitcoin, /[13][a-km-zA-HJ-NP-Z1-9]{25,34}/)
 LooksLike.register(:crypto_p2pkh, /[3][a-km-zA-HJ-NP-Z1-9]{25,34}/)
 LooksLike.register(:crypto_p2sh, /[1][a-km-zA-HJ-NP-Z1-9]{25,34}/)
 
 puts LooksLike.crypto?("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")
 
-addresses  = LooksLike.scan(user_input, match: :crypto)
+addresses  = LooksLike.extract(user_input, match: :crypto)
 ```
+
+Built-in patterns can also be overwritten
+```ruby
+require 'looks_like'
+
+puts LooksLike.date?("23-02-29", subset: :iso_8601)
+# => false
+
+LooksLike.register(:date_iso_8601, /[[:digit:]]{2}-(0?[1-9]|1[0-2])-[[:digit:]]{2}/)
+puts LooksLike.date?("23-02-29", subset: :iso_8601)
+# => LooksLike: overwriting existing pattern date_iso_8601
+# => true
+```
+
+
 
 
 ## Supported Patterns
@@ -240,7 +293,7 @@ addresses  = LooksLike.scan(user_input, match: :crypto)
 | `:unicode` | `:digit`, `:alpha`, `:upper`, `:lower`, `:alphanum`, `:punct`, `:print`, `:graph` |
 | `:encoded` | `:base64`, `:base6url`, `:base32`, `:hex`, `:binary`, `:jwt` |
 | `:flag` | `:standard`, `:ctf`, `:htb`, `:thm`, `:picoctf` |
-| `:date` | `:iso`, `:us`, `:eu`, `:long`, `:short` |
+| `:date` | `:iso_8601`, `:us`, `:eu`, `:long`, `:short` |
 | `:time` | `:h12`, `:h24`, `:zone` |
 | `:phone` | `:local`, `:us`, `:intl` |
 | `:numeric` | `:integer`, `:decimal` |
