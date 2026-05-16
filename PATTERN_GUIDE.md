@@ -52,7 +52,7 @@ Patterns that don't follow will either be raised or silently missclassified
 
 ## False Positive Or Limitations
 Every pattern has its limitations or false positive risk.
-Always document limitations regex tightening can fix.
+Always and only document limitations regex tightening can fix so that reviewer or any contributor can help.
 A pattern that matches too broadly is worse than a missing pattern
 
 ```ruby
