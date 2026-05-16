@@ -52,13 +52,15 @@ Patterns that don't follow will either be raised or silently missclassified
 
 ## False Positive Or Limitations
 Every pattern has its limitations or false positive risk.
-Always tighten regex or document it.
+Always document limitations regex tightening can fix.
 A pattern that matches too broadly is worse than a missing pattern
-**Ignore if regex tightening can't solve limitations**
 
 ```ruby
 #hash_md5: 32 hex chars
-# collides with: ntlm hashes
+# .....
+# Limitations: matches patterns that follow date format but aren't actual dates. (9999-99-99)
+date_iso: /[0-9]{4}-[0-9]{2}-[0-9]{2}/
+#2025-12-25
 ```
 
 ## Meta Format
@@ -82,6 +84,9 @@ hash_md5: /[A-Fa-f0-9]{32}/,
 # Source: www.no_ones_site.org
 btc_bitcoin: /[13][a-km-zA-HJ-NP-Z1-9]{25,34}/,
 ```
+
+## Note:
+Always leave an example under each pattern you define
 
 ## Bonus 
 You can test your custom patterns before adding by:
