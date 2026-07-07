@@ -50,7 +50,7 @@ module LooksLike
   
   PATTERNS = {
     #other groups to add [:secrets, :hashes :cve :currency, :wallet, :log, :coordinates, :command, :date_time, :version, :path, :useragent, :error]
-    # Tighten regex to minimize false positives [what() spues out too many false positives]
+    # Tighten regex to minimize false positives
     # Needs regex tightening: [:currency, :url, :ip_v6, :network_mac, :network_uuid, :phone_variants, :time_zone]
 
     # =============== ASCII ===============
