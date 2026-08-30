@@ -1,7 +1,7 @@
 module LooksLike
 
 
-    #these regexes are kept as blocks for false positives
+    #these regexes are kept as blocks to make maintenance easier
   BASE_HEXBYTE = '[[:xdigit:]]{2}'
   BASE_HEXPREFIX= '(?:0x[[:xdigit:]]+)'
 
@@ -9,6 +9,7 @@ module LooksLike
   DATE_YEAR2 =  '\d{2}'
   DATE_MONTH30 = '(?:04|06|09|11)'
   DATE_MONTH31 = '(?:01|03|05|07|08|12)'
+  # month and day names should be case 
   DATE_MONTHNAME31 = '(?:Jan|Mar|May|Jul|Aug|Oct|Dec|January|March|May|July|August|October|December)'
   DATE_MONTHNAME30 = '(?:Apr|Jun|Sep|Nov|April|June|September|November)'
   DATE_FEBMONTH = 'Feb'
@@ -50,7 +51,7 @@ module LooksLike
   
   PATTERNS = {
     #other groups to add [:secrets, :hashes :cve :currency, :wallet, :log, :coordinates, :command, :date_time, :version, :path, :useragent, :error]
-    # Tighten regex to minimize false positives
+    # Tighten regex to minimize false positives [what() spues out too many false positives]
     # Needs regex tightening: [:currency, :url, :ip_v6, :network_mac, :network_uuid, :phone_variants, :time_zone]
 
     # =============== ASCII ===============
@@ -83,9 +84,10 @@ module LooksLike
     encoded_base64_url: /(?:#{ENCODED_B64URL}{4})*(?:#{ENCODED_B64URL}{2}==|#{ENCODED_B64URL}{3}=)?/,
     #/(?:[A-Za-z0-9+\-_]{4})*(?:[A-Za-z0-9+\-_]{2}==|[A-Za-z0-9+\-_]{3}=)?/,
     encoded_base32: /[A-Z2-7]+=*/,
-    encoded_hex: /[[:xdigit:]]+/,
+    encoded_hex: /[[:xdigit:]]+/, # not necessarily hex digits but also even.
     encoded_binary: /[01]{6,8}/,
     encoded_jwt: /#{ENCODED_B64URL}+\.#{ENCODED_B64URL}+\.#{ENCODED_B64URL}*/,
+    # jwt begins with "eyJ" meaing {" this can be a clue to make the regex stricter
     #/[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/,
 
 
@@ -95,6 +97,8 @@ module LooksLike
     flag_htb: /HTB\{[^}]+\}/,
     flag_thm: /THM\{[^}]+\}/,
     flag_picoctf: /picoCTF\{[^}]+\}/,
+    # some flags go with this format, FLAG- instead of braces so thewse symbols "-,=,:" should also be considered as delimiters,
+    # add codelivly flag format too, CLV{...}
 
     # ==================== FILE MAGIC BYTES ===================
     magic_pdf: /%PDF-[0-9]+\.[0-9]+/,
@@ -198,7 +202,7 @@ module LooksLike
     #/(0?[1-9]|1[0-2]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(AM|PM|am|pm)/,
     time_zone: /([01][[:digit:]]|2[0-3]):[0-5][[:digit:]](:[0-5][[:digit:]])?\s?(UTC|GMT[+-][[:digit:]]{2}:[[:digit]]{2})/,
 
-    # Datetime
+    # Datetime will be supported
 =begin
 ISO 8601 uses the 24-hour clock system. As of ISO 8601-1:2019, the basic format is T[hh][mm][ss] and the extended format is T[hh]:[mm]:[ss]. Earlier versions omitted the T (representing time) in both formats.
 
