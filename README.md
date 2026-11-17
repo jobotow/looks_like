@@ -1,4 +1,4 @@
-# LooksLike
+# LooksLike 
 
 A ruby library for detecting patterns in strings. Tell you what a string looks like.
 
